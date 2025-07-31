@@ -1,0 +1,4 @@
+__pycache__
+faiss_faces.index
+faiss_faces_metadata.json
+
