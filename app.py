@@ -347,14 +347,26 @@ class FaceDetectionApp:
         if self.cap is not None:
             self.cap.release()
         
-        self.cap = cv2.VideoCapture(camera_index)
+        # For Jetson with USB cameras, use device path for better compatibility
+        if isinstance(camera_index, int):
+            device_path = f"/dev/video{camera_index}"
+            self.cap = cv2.VideoCapture(device_path, cv2.CAP_V4L2)
+        else:
+            self.cap = cv2.VideoCapture(camera_index)
+            
         if not self.cap.isOpened():
             return False
+        
+        # Set MJPEG format for better performance with USB cameras
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
         
         # Set camera properties for better performance
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, Config.CAMERA_WIDTH)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Config.CAMERA_HEIGHT)
         self.cap.set(cv2.CAP_PROP_FPS, Config.CAMERA_FPS)
+        
+        # Add buffer size setting to reduce latency
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         
         self.is_running = True
         return True
@@ -526,8 +538,13 @@ class FaceDetectionApp:
                             continue
                     
                     # For unlocked faces, process normally
-                    # Resize face for display
-                    face_resized = face_crop.resize((100, 100), Image.Resampling.LANCZOS)
+                    # Resize face for display - use Image.LANCZOS for compatibility with older Pillow versions
+                    try:
+                        # Try new Pillow 10+ syntax first
+                        face_resized = face_crop.resize((100, 100), Image.Resampling.LANCZOS)
+                    except AttributeError:
+                        # Fallback to older Pillow syntax
+                        face_resized = face_crop.resize((100, 100), Image.LANCZOS)
                     
                     # Convert face to base64 for web display
                     import io

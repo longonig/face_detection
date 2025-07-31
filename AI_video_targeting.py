@@ -38,9 +38,17 @@ mtcnn_device = torch.device(device)
 # print(f'Using CPU for MTCNN to avoid MPS compatibility issues')
 mtcnn = MTCNN(keep_all=True, device=mtcnn_device)
 
-# Initialize video capture - try camera 0 first (built-in camera)
-# Change to 1 if you specifically want to use an external/continuity camera
-cap = cv2.VideoCapture(0)
+# Initialize video capture - use device path for better compatibility on Jetson
+# For EMEET SmartCam C960 4K on Jetson Orin
+cap = cv2.VideoCapture("/dev/video0", cv2.CAP_V4L2)
+
+# Set MJPEG format for better performance with USB cameras
+if cap.isOpened():
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    cap.set(cv2.CAP_PROP_FPS, 30)
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
 
 # def add_unknown_to_database(image_path, confidence=0.0, source="auto_detection", 

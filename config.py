@@ -9,9 +9,9 @@ class Config:
     
     # Camera settings
     DEFAULT_CAMERA_INDEX = 0
-    CAMERA_WIDTH = 1024
-    CAMERA_HEIGHT = 768
-    CAMERA_FPS = 60
+    CAMERA_WIDTH = 1280
+    CAMERA_HEIGHT = 720
+    CAMERA_FPS = 30
     
     # Detection settings
     FACE_CONFIDENCE_THRESHOLD = 0.9
@@ -24,10 +24,14 @@ class Config:
     MAX_FACES_TO_DISPLAY = 10
     FACE_UPDATE_INTERVAL = 0.3  # seconds - faster updates for GPU
     
-    # Device settings
+    # Device settings - optimized for Jetson Orin
     FORCE_CPU = False  # Set to True to force CPU usage
-    GPU_MEMORY_FRACTION = 0.8  # Use 80% of GPU memory
-    ENABLE_MIXED_PRECISION = True  # Enable mixed precision for RTX cards
+    GPU_MEMORY_FRACTION = 0.7  # Use 70% of GPU memory (conservative for stability)
+    ENABLE_MIXED_PRECISION = False  # Disable mixed precision for stability on Jetson
+    
+    # Performance optimizations for Jetson
+    JETSON_OPTIMIZATION = True  # Enable Jetson-specific optimizations
+    USE_TENSORRT = False  # Enable TensorRT acceleration if available
     
     # Web interface settings
     HOST = '0.0.0.0'
