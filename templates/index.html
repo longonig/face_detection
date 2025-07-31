@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Face Detection - Live Camera Feed</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 5px;
+            color: #e0e0e0;
+        }
+
+        .main-container {
+            background: rgba(30, 30, 45, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            margin: 10px;
+            padding: 20px;
+            max-width: 100%;
+            min-height: 90vh;
+            border: 1px solid #404040;
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            max-height: 600px;
+            min-height: 400px;
+        }
+
+        #videoFeed {
+            width: 100%;
+            height: auto;
+            display: block;
+            max-height: 600px;
+            min-height: 400px;
+            object-fit: contain;
+        }
+
+        .controls-panel {
+            background: linear-gradient(145deg, #2a2a3e, #1f1f2e);
+            border-radius: 8px;
+            padding: 18px;
+            margin-top: 15px;
+            box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.1);
+            border: 1px solid #404040;
+        }
+
+        .btn-custom {
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-start {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+
+        .btn-stop {
+            background: linear-gradient(45deg, #dc3545, #fd7e14);
+            color: white;
+        }
+
+        .btn-stop:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+            color: white;
+        }
+
+        .faces-panel {
+            background: linear-gradient(145deg, #2a2a3e, #1f1f2e);
+            border-radius: 8px;
+            padding: 18px;
+            margin-top: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #404040;
+        }
+
+        .face-card {
+            background: #353545;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 8px 0;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+            border: 1px solid #505050;
+            color: #e0e0e0;
+        }
+
+        .face-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .face-card.recognized {
+            border-left: 4px solid #28a745;
+        }
+
+        .face-card.unrecognized {
+            border-left: 4px solid #ffc107;
+        }
+
+        .face-card.locked {
+            border-left: 4px solid #17a2b8;
+            background: linear-gradient(135deg, #2a3c4f, #353545);
+            position: relative;
+        }
+
+        .face-card.locked::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(23, 162, 184, 0.05);
+            border-radius: 6px;
+            pointer-events: none;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: white;
+            margin-left: 5px;
+        }
+
+        .status-target {
+            background-color: #dc3545;
+        }
+
+        .status-friendly {
+            background-color: #28a745;
+        }
+
+        .status-suspect {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .add-face-form {
+            background: #2a2a3e;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 8px;
+            border: 1px solid #505050;
+        }
+
+        .add-face-form input {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            margin-bottom: 5px;
+            background: #404050;
+            border: 1px solid #606060;
+            color: #e0e0e0;
+        }
+
+        .add-face-form input:focus {
+            background: #505060;
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .add-face-form input::placeholder {
+            color: #a0a0a0;
+        }
+
+        .add-face-form .btn {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            margin: 2px;
+        }
+
+        .face-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #007bff;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-active {
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .status-inactive {
+            background: #6c757d;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #4a4a6a, #3a3a5a);
+            color: white;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            margin: 8px 0;
+            border: 1px solid #606060;
+        }
+
+        .stats-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .stats-label {
+            font-size: 0.85rem;
+        }
+
+        .loading-spinner {
+            display: none;
+            font-size: 0.85rem;
+        }
+
+        .camera-placeholder {
+            background: linear-gradient(45deg, #2c3e50, #1a252f);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            border-radius: 8px;
+            border: 1px solid #404040;
+        }
+
+        .alert-custom {
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            background: #3a3a4a;
+            color: #e0e0e0;
+            border: 1px solid #505050;
+        }
+
+        .alert-success {
+            background: #2d5a2d !important;
+            border-color: #28a745 !important;
+            color: #90ee90 !important;
+        }
+
+        .alert-danger {
+            background: #5a2d2d !important;
+            border-color: #dc3545 !important;
+            color: #ff9999 !important;
+        }
+
+        .alert-info {
+            background: #2d4a5a !important;
+            border-color: #17a2b8 !important;
+            color: #87ceeb !important;
+        }
+
+        .alert-warning {
+            background: #5a4d2d !important;
+            border-color: #ffc107 !important;
+            color: #ffeb9c !important;
+        }
+
+        .compact-header {
+            margin-bottom: 20px;
+        }
+
+        .compact-title {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+
+        .compact-subtitle {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+            color: #b0b0b0;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #e0e0e0;
+        }
+
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+
+        .form-check-input:focus {
+            border-color: #667eea;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+
+        .form-check-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #e0e0e0;
+        }
+
+        .text-muted {
+            color: #a0a0a0 !important;
+        }
+
+        h6 {
+            color: #e0e0e0;
+        }
+
+        small {
+            color: #b0b0b0;
+        }
+
+        /* Responsive adjustments for very small screens */
+        @media (max-width: 576px) {
+            .main-container {
+                margin: 2px;
+                padding: 10px;
+            }
+            
+            .video-container {
+                max-height: 300px;
+                min-height: 200px;
+            }
+            
+            #videoFeed {
+                max-height: 300px;
+                min-height: 200px;
+            }
+            
+            .camera-placeholder {
+                height: 200px;
+            }
+            
+            .stats-number {
+                font-size: 1.4rem;
+            }
+            
+            .compact-title {
+                font-size: 1.2rem;
+            }
+            
+            .face-image {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* Medium screens adjustments */
+        @media (max-width: 992px) {
+            .video-container {
+                max-height: 450px;
+            }
+            
+            #videoFeed {
+                max-height: 450px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="row compact-header">
+                <div class="col-12 text-center">
+                    <h1 class="compact-title">
+                        <i class="fas fa-eye text-primary me-2"></i>
+                        AI Face Detection
+                    </h1>
+                    <p class="compact-subtitle text-muted">Real-time face detection and tracking</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Video Feed Column -->
+                <div class="col-lg-9">
+                    <div class="video-container mb-3">
+                        <div id="cameraPlaceholder" class="camera-placeholder">
+                            <div class="text-center">
+                                <i class="fas fa-video fa-3x mb-3"></i>
+                                <h4>Camera Feed</h4>
+                                <p class="mb-0">Click "Start Detection" to begin</p>
+                            </div>
+                        </div>
+                        <img id="videoFeed" src="" alt="Video Feed" style="display: none;">
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="controls-panel">
+                        <div class="row align-items-center">
+                            <div class="col-md-7">
+                                <h6 class="panel-title">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Detection Controls
+                                </h6>
+                                <div class="d-flex gap-3 mb-3">
+                                    <button id="startBtn" class="btn btn-start btn-custom">
+                                        <i class="fas fa-play me-2"></i>
+                                        Start Detection
+                                    </button>
+                                    <button id="stopBtn" class="btn btn-stop btn-custom" disabled>
+                                        <i class="fas fa-stop me-2"></i>
+                                        Stop Detection
+                                    </button>
+                                </div>
+                                
+                                <!-- Landmark Toggle -->
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="landmarkToggle" checked>
+                                        <label class="form-check-label" for="landmarkToggle">
+                                            <i class="fas fa-network-wired me-1"></i>
+                                            Show Facial Landmarks
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5 text-end">
+                                <div class="d-flex align-items-center justify-content-end mb-2">
+                                    <span class="status-indicator" id="statusIndicator"></span>
+                                    <span id="statusText">Inactive</span>
+                                </div>
+                                <div class="loading-spinner" id="loadingSpinner">
+                                    <i class="fas fa-spinner fa-spin"></i> Processing...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats and Faces Column -->
+                <div class="col-lg-3">
+                    <!-- Stats -->
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="stats-card">
+                                <div class="stats-number" id="faceCount">0</div>
+                                <div class="stats-label">Faces Detected</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stats-card">
+                                <div class="stats-number" id="fps">0</div>
+                                <div class="stats-label">FPS</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detected Faces -->
+                    <div class="faces-panel">
+                        <h6 class="panel-title">
+                            <i class="fas fa-users me-2"></i>
+                            Detected Faces
+                        </h6>
+                        <div id="facesContainer">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-user-slash fa-2x mb-3" style="color: #a0a0a0;"></i>
+                                <p style="color: #a0a0a0;">No faces detected yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div id="alertContainer" class="mt-3"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        class FaceDetectionApp {
+            constructor() {
+                this.isRunning = false;
+                this.facesUpdateInterval = null;
+                this.fpsCounter = 0;
+                this.lastFpsUpdate = Date.now();
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.initializeFaceLocking();
+                this.loadLandmarkSettings();
+                this.updateStatus(false);
+            }
+
+            initializeElements() {
+                this.startBtn = document.getElementById('startBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.videoFeed = document.getElementById('videoFeed');
+                this.cameraPlaceholder = document.getElementById('cameraPlaceholder');
+                this.statusIndicator = document.getElementById('statusIndicator');
+                this.statusText = document.getElementById('statusText');
+                this.loadingSpinner = document.getElementById('loadingSpinner');
+                this.facesContainer = document.getElementById('facesContainer');
+                this.faceCount = document.getElementById('faceCount');
+                this.fpsDisplay = document.getElementById('fps');
+                this.alertContainer = document.getElementById('alertContainer');
+                this.landmarkToggle = document.getElementById('landmarkToggle');
+            }
+
+            bindEvents() {
+                this.startBtn.addEventListener('click', () => this.startDetection());
+                this.stopBtn.addEventListener('click', () => this.stopDetection());
+                this.landmarkToggle.addEventListener('change', () => this.toggleLandmarks());
+            }
+
+            async startDetection() {
+                this.showLoading(true);
+                
+                try {
+                    const response = await fetch('/start_detection', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ camera_index: 0 })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        this.isRunning = true;
+                        this.updateStatus(true);
+                        this.startVideoStream();
+                        this.startFacesUpdate();
+                        this.showAlert('Face detection started successfully!', 'success');
+                    } else {
+                        this.showAlert('Failed to start camera: ' + result.message, 'danger');
+                    }
+                } catch (error) {
+                    this.showAlert('Error starting detection: ' + error.message, 'danger');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async stopDetection() {
+                this.showLoading(true);
+                
+                try {
+                    const response = await fetch('/stop_detection', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        this.isRunning = false;
+                        this.updateStatus(false);
+                        this.stopVideoStream();
+                        this.stopFacesUpdate();
+                        this.clearFaces();
+                        // Clear locked faces when stopping detection
+                        this.lockedFaces.clear();
+                        this.formStates.clear();
+                        this.showAlert('Face detection stopped', 'info');
+                    }
+                } catch (error) {
+                    this.showAlert('Error stopping detection: ' + error.message, 'danger');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            startVideoStream() {
+                this.videoFeed.src = '/video_feed?' + new Date().getTime();
+                this.videoFeed.style.display = 'block';
+                this.cameraPlaceholder.style.display = 'none';
+                
+                // Update FPS counter
+                this.videoFeed.onload = () => {
+                    this.fpsCounter++;
+                    const now = Date.now();
+                    if (now - this.lastFpsUpdate > 1000) {
+                        this.fpsDisplay.textContent = this.fpsCounter;
+                        this.fpsCounter = 0;
+                        this.lastFpsUpdate = now;
+                    }
+                };
+            }
+
+            stopVideoStream() {
+                this.videoFeed.src = '';
+                this.videoFeed.style.display = 'none';
+                this.cameraPlaceholder.style.display = 'flex';
+                this.fpsDisplay.textContent = '0';
+            }
+
+            async startFacesUpdate() {
+                this.facesUpdateInterval = setInterval(async () => {
+                    try {
+                        // Check if user is currently typing - if so, skip this update
+                        const activeElement = document.activeElement;
+                        const isTypingInForm = activeElement && (
+                            activeElement.id.startsWith('name-') || 
+                            activeElement.id.startsWith('notes-')
+                        );
+                        
+                        if (isTypingInForm) {
+                            return; // Skip update while user is typing
+                        }
+                        
+                        // Get faces and locked faces status from backend
+                        const [facesResponse, lockedResponse] = await Promise.all([
+                            fetch('/get_faces'),
+                            fetch('/get_locked_faces')
+                        ]);
+                        
+                        const facesData = await facesResponse.json();
+                        const lockedData = await lockedResponse.json();
+                        
+                        // Update local locked faces set
+                        this.lockedFaces = new Set(lockedData.locked_faces);
+                        
+                        this.updateFaces(facesData.faces);
+                    } catch (error) {
+                        console.error('Error fetching faces:', error);
+                    }
+                }, 800); // Slightly longer interval to reduce interruptions
+            }
+
+            stopFacesUpdate() {
+                if (this.facesUpdateInterval) {
+                    clearInterval(this.facesUpdateInterval);
+                    this.facesUpdateInterval = null;
+                }
+            }
+
+            updateFaces(faces) {
+                this.faceCount.textContent = faces.length;
+                
+                if (faces.length === 0) {
+                    this.facesContainer.innerHTML = `
+                        <div class="text-center text-muted">
+                            <i class="fas fa-user-slash fa-2x mb-3" style="color: #a0a0a0;"></i>
+                            <p style="color: #a0a0a0;">No faces detected</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Get existing face cards and their positions
+                const existingCards = new Map();
+                const existingOrder = [];
+                this.facesContainer.querySelectorAll('.face-card').forEach((card, index) => {
+                    const faceId = parseInt(card.dataset.faceId);
+                    existingCards.set(faceId, card);
+                    existingOrder[index] = faceId;
+                });
+
+                // Create a map of current faces by ID for quick lookup
+                const currentFaces = new Map();
+                faces.forEach(face => {
+                    currentFaces.set(face.id, face);
+                });
+
+                // Process each face and determine what needs to be updated
+                const finalCards = [];
+                let containerNeedsUpdate = false;
+                
+                faces.forEach((face, index) => {
+                    const isLocked = this.lockedFaces && this.lockedFaces.has(face.id);
+                    const existingCard = existingCards.get(face.id);
+                    
+                    // If face is locked and we have an existing card, keep it completely unchanged
+                    if (isLocked && existingCard) {
+                        // For locked faces, don't modify ANYTHING - complete preservation
+                        finalCards.push(existingCard);
+                        return;
+                    }
+                    
+                    // For unlocked faces or new faces, generate HTML
+                    const newCardHtml = this.generateFaceCardHtml(face, isLocked);
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = newCardHtml;
+                    const newCard = tempDiv.firstElementChild;
+                    
+                    // Check if this is actually different from existing
+                    if (!existingCard || existingCard.outerHTML !== newCard.outerHTML) {
+                        containerNeedsUpdate = true;
+                    }
+                    
+                    finalCards.push(newCard);
+                });
+
+                // Only update container if there are actual changes and no face is currently focused
+                const activeElement = document.activeElement;
+                const isTypingInForm = activeElement && (
+                    activeElement.id.startsWith('name-') || 
+                    activeElement.id.startsWith('notes-')
+                );
+                
+                if (containerNeedsUpdate && !isTypingInForm) {
+                    // Preserve focused element if it exists
+                    const focusedElementId = activeElement ? activeElement.id : null;
+                    const focusedElementValue = activeElement ? activeElement.value : null;
+                    const focusedElementSelectionStart = activeElement ? activeElement.selectionStart : null;
+                    const focusedElementSelectionEnd = activeElement ? activeElement.selectionEnd : null;
+                    
+                    this.facesContainer.innerHTML = '';
+                    finalCards.forEach(card => {
+                        this.facesContainer.appendChild(card);
+                    });
+                    
+                    // Restore focus and cursor position if element was focused
+                    if (focusedElementId) {
+                        const restoredElement = document.getElementById(focusedElementId);
+                        if (restoredElement) {
+                            restoredElement.value = focusedElementValue || '';
+                            restoredElement.focus();
+                            if (focusedElementSelectionStart !== null) {
+                                restoredElement.setSelectionRange(focusedElementSelectionStart, focusedElementSelectionEnd);
+                            }
+                        }
+                    }
+                }
+            }
+
+            generateFaceCardHtml(face, isLocked) {
+                if (face.faiss_found) {
+                    // Face found in FAISS database
+                    return `
+                        <div class="face-card recognized" data-face-id="${face.id}">
+                            <div class="row align-items-center">
+                                <div class="col-3">
+                                    <img src="data:image/jpeg;base64,${face.image}" 
+                                         alt="Face ${face.id}" class="face-image">
+                                </div>
+                                <div class="col-9">
+                                    <h6 class="mb-1">
+                                        ${face.name}
+                                        <span class="status-badge status-${face.status}">${face.status.toUpperCase()}</span>
+                                    </h6>
+                                    <small class="text-muted d-block">
+                                        Confidence: ${(face.confidence * 100).toFixed(1)}%
+                                    </small>
+                                    <small class="text-muted d-block">
+                                        Notes: ${face.notes || 'No notes'}
+                                    </small>
+                                    <small class="text-muted">
+                                        Position: (${face.box[0]}, ${face.box[1]})
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Face not found in FAISS database - show add form
+                    const lockIcon = isLocked ? 'fa-lock' : 'fa-lock-open';
+                    const lockTitle = isLocked ? 'Face locked for editing - click to unlock' : 'Click to lock face for editing';
+                    const lockClass = isLocked ? 'btn-warning' : 'btn-outline-secondary';
+                    
+                    return `
+                        <div class="face-card unrecognized ${isLocked ? 'locked' : ''}" data-face-id="${face.id}">
+                            <div class="row align-items-center">
+                                <div class="col-3">
+                                    <img src="data:image/jpeg;base64,${face.image}" 
+                                         alt="Face ${face.id}" class="face-image">
+                                </div>
+                                <div class="col-9">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-1">Unknown Face ${face.id + 1}</h6>
+                                        <button class="btn ${lockClass} btn-sm" title="${lockTitle}"
+                                                onclick="app.toggleFaceLock(${face.id})">
+                                            <i class="fas ${lockIcon}"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted d-block">
+                                        Confidence: ${(face.confidence * 100).toFixed(1)}%
+                                    </small>
+                                    <small class="text-muted">
+                                        Position: (${face.box[0]}, ${face.box[1]})
+                                    </small>
+                                    ${isLocked ? '<small class="text-warning d-block"><i class="fas fa-info-circle"></i> Face locked for editing</small>' : ''}
+                                </div>
+                            </div>
+                            <div class="add-face-form">
+                                <input type="text" class="form-control form-control-sm mb-2" 
+                                       placeholder="Enter name" id="name-${face.id}"
+                                       onfocus="app.lockFace(${face.id})"
+                                       onblur="app.checkFormEmpty(${face.id})">
+                                <input type="text" class="form-control form-control-sm mb-2" 
+                                       placeholder="Enter notes (optional)" id="notes-${face.id}"
+                                       onfocus="app.lockFace(${face.id})"
+                                       onblur="app.checkFormEmpty(${face.id})">
+                                <div class="d-flex justify-content-between">
+                                    <button class="btn btn-danger btn-sm" 
+                                            onclick="app.addFaceToDatabase('${face.image}', ${face.id}, 'target')">
+                                        <i class="fas fa-crosshairs"></i> Target
+                                    </button>
+                                    <button class="btn btn-success btn-sm" 
+                                            onclick="app.addFaceToDatabase('${face.image}', ${face.id}, 'friendly')">
+                                        <i class="fas fa-heart"></i> Friendly
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" 
+                                            onclick="app.addFaceToDatabase('${face.image}', ${face.id}, 'suspect')">
+                                        <i class="fas fa-question-circle"></i> Suspect
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            clearFaces() {
+                this.faceCount.textContent = '0';
+                this.facesContainer.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-user-slash fa-2x mb-3" style="color: #a0a0a0;"></i>
+                        <p style="color: #a0a0a0;">No faces detected yet</p>
+                    </div>
+                `;
+            }
+
+            updateStatus(active) {
+                if (active) {
+                    this.statusIndicator.className = 'status-indicator status-active';
+                    this.statusText.textContent = 'Active';
+                    this.startBtn.disabled = true;
+                    this.stopBtn.disabled = false;
+                } else {
+                    this.statusIndicator.className = 'status-indicator status-inactive';
+                    this.statusText.textContent = 'Inactive';
+                    this.startBtn.disabled = false;
+                    this.stopBtn.disabled = true;
+                }
+            }
+
+            showLoading(show) {
+                this.loadingSpinner.style.display = show ? 'block' : 'none';
+            }
+
+            showAlert(message, type) {
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-custom alert-dismissible fade show" role="alert">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                
+                this.alertContainer.innerHTML = alertHtml;
+                
+                // Auto-dismiss after 3 seconds
+                setTimeout(() => {
+                    const alert = this.alertContainer.querySelector('.alert');
+                    if (alert) {
+                        alert.remove();
+                    }
+                }, 3000);
+            }
+
+            async addFaceToDatabase(imageBase64, faceId, status) {
+                const nameInput = document.getElementById(`name-${faceId}`);
+                const notesInput = document.getElementById(`notes-${faceId}`);
+                
+                const name = nameInput ? nameInput.value.trim() : '';
+                const notes = notesInput ? notesInput.value.trim() : '';
+                
+                if (!name) {
+                    this.showAlert('Please enter a name for this person', 'warning');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/add_face', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            image: imageBase64,
+                            name: name,
+                            status: status,
+                            notes: notes
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        this.showAlert(`${name} added to database as ${status}`, 'success');
+                        // Clear the form inputs
+                        if (nameInput) nameInput.value = '';
+                        if (notesInput) notesInput.value = '';
+                        // Unlock the face after successful addition
+                        await this.unlockFace(faceId);
+                    } else {
+                        this.showAlert('Error adding face: ' + result.message, 'danger');
+                    }
+                } catch (error) {
+                    this.showAlert('Error adding face: ' + error.message, 'danger');
+                }
+            }
+
+            // Face locking functionality
+            initializeFaceLocking() {
+                this.lockedFaces = new Set();
+                this.formStates = new Map();
+            }
+
+            async lockFace(faceId) {
+                if (!this.lockedFaces) {
+                    this.initializeFaceLocking();
+                }
+                
+                try {
+                    const response = await fetch('/lock_face', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ face_id: faceId })
+                    });
+                    
+                    if (response.ok) {
+                        this.lockedFaces.add(faceId);
+                        this.updateFaceLockDisplay(faceId, true);
+                    }
+                } catch (error) {
+                    console.error('Error locking face:', error);
+                }
+            }
+
+            async unlockFace(faceId) {
+                if (!this.lockedFaces) {
+                    this.initializeFaceLocking();
+                }
+                
+                try {
+                    const response = await fetch('/unlock_face', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ face_id: faceId })
+                    });
+                    
+                    if (response.ok) {
+                        this.lockedFaces.delete(faceId);
+                        this.formStates.delete(faceId);
+                        this.updateFaceLockDisplay(faceId, false);
+                    }
+                } catch (error) {
+                    console.error('Error unlocking face:', error);
+                }
+            }
+
+            async toggleFaceLock(faceId) {
+                if (!this.lockedFaces) {
+                    this.initializeFaceLocking();
+                }
+                
+                if (this.lockedFaces.has(faceId)) {
+                    await this.unlockFace(faceId);
+                } else {
+                    await this.lockFace(faceId);
+                }
+            }
+
+            updateFaceLockDisplay(faceId, isLocked) {
+                const faceCard = document.querySelector(`[data-face-id="${faceId}"]`);
+                if (faceCard) {
+                    const lockButton = faceCard.querySelector('button[onclick*="toggleFaceLock"]');
+                    if (lockButton) {
+                        const icon = lockButton.querySelector('i');
+                        if (isLocked) {
+                            lockButton.className = 'btn btn-warning btn-sm';
+                            lockButton.title = 'Face locked for editing - click to unlock';
+                            icon.className = 'fas fa-lock';
+                            faceCard.classList.add('locked');
+                        } else {
+                            lockButton.className = 'btn btn-outline-secondary btn-sm';
+                            lockButton.title = 'Click to lock face for editing';
+                            icon.className = 'fas fa-lock-open';
+                            faceCard.classList.remove('locked');
+                        }
+                    }
+                }
+            }
+
+            checkFormEmpty(faceId) {
+                // Auto-unlock face if both form fields are empty
+                setTimeout(async () => {
+                    const nameInput = document.getElementById(`name-${faceId}`);
+                    const notesInput = document.getElementById(`notes-${faceId}`);
+                    
+                    if (nameInput && notesInput) {
+                        const nameEmpty = !nameInput.value.trim();
+                        const notesEmpty = !notesInput.value.trim();
+                        
+                        if (nameEmpty && notesEmpty) {
+                            await this.unlockFace(faceId);
+                        }
+                    }
+                }, 100); // Small delay to ensure blur event completes
+            }
+
+            preserveFormStates() {
+                if (!this.lockedFaces) {
+                    this.initializeFaceLocking();
+                }
+                
+                const states = new Map();
+                
+                // Save form values for locked faces
+                this.lockedFaces.forEach(faceId => {
+                    const nameInput = document.getElementById(`name-${faceId}`);
+                    const notesInput = document.getElementById(`notes-${faceId}`);
+                    
+                    if (nameInput && notesInput) {
+                        states.set(faceId, {
+                            name: nameInput.value,
+                            notes: notesInput.value
+                        });
+                    }
+                });
+                
+                return states;
+            }
+
+            restoreFormStates(states) {
+                if (!states) return;
+                
+                // Restore form values for locked faces
+                states.forEach((state, faceId) => {
+                    const nameInput = document.getElementById(`name-${faceId}`);
+                    const notesInput = document.getElementById(`notes-${faceId}`);
+                    
+                    if (nameInput && notesInput) {
+                        nameInput.value = state.name;
+                        notesInput.value = state.notes;
+                    }
+                });
+            }
+
+            async loadLandmarkSettings() {
+                try {
+                    const response = await fetch('/get_landmark_settings');
+                    const data = await response.json();
+                    
+                    // Update toggle state
+                    this.landmarkToggle.checked = data.show_landmarks && data.show_triangulation;
+                } catch (error) {
+                    console.error('Error loading landmark settings:', error);
+                }
+            }
+
+            async toggleLandmarks() {
+                const isEnabled = this.landmarkToggle.checked;
+                
+                try {
+                    const response = await fetch('/toggle_landmarks', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            show_landmarks: isEnabled,
+                            show_triangulation: isEnabled
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        const statusText = isEnabled ? 'enabled' : 'disabled';
+                        this.showAlert(`Facial landmarks ${statusText}`, 'info');
+                    } else {
+                        this.showAlert('Error toggling landmarks', 'danger');
+                        // Revert toggle state on error
+                        this.landmarkToggle.checked = !isEnabled;
+                    }
+                } catch (error) {
+                    this.showAlert('Error toggling landmarks: ' + error.message, 'danger');
+                    // Revert toggle state on error
+                    this.landmarkToggle.checked = !isEnabled;
+                }
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new FaceDetectionApp();
+        });
+    </script>
+</body>
+</html>

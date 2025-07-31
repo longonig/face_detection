@@ -1,0 +1,13 @@
+Flask
+Flask-CORS
+torch
+torchvision
+facenet-pytorch
+Pillow
+faiss-cpu
+scikit-learn
+matplotlib
+seaborn
+numpy
+gradio
+opencv-python
