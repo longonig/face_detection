@@ -741,9 +741,11 @@ def update_face():
     return jsonify({'status': 'error', 'message': 'Face not found'}), 404
 
 def generate_frames():
-    """Generate video frames for streaming"""
+    """Generate video frames for streaming with optimized performance"""
     frame_skip = Config.FRAME_SKIP_RATE  # Use config frame skip rate
     frame_count = 0
+    target_fps = getattr(Config, 'STREAM_FPS', 45)  # Default to 45 FPS if not set
+    sleep_time = 1.0 / target_fps  # Calculate sleep time based on target FPS
     
     while True:
         if not face_detector.is_running:
@@ -757,20 +759,31 @@ def generate_frames():
             frame, _ = face_detector.get_frame_data()
         
         if frame is not None:
-            # Encode frame as JPEG with config quality
-            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, Config.JPEG_QUALITY])
+            # Encode frame as JPEG with optimized quality for speed
+            encode_params = [
+                cv2.IMWRITE_JPEG_QUALITY, Config.JPEG_QUALITY,
+                cv2.IMWRITE_JPEG_OPTIMIZE, 1,  # Enable JPEG optimization
+                cv2.IMWRITE_JPEG_PROGRESSIVE, 1  # Enable progressive JPEG for faster loading
+            ]
+            ret, buffer = cv2.imencode('.jpg', frame, encode_params)
             if ret:
                 frame_bytes = buffer.tobytes()
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
         
-        time.sleep(0.033)  # ~30 FPS
+        time.sleep(sleep_time)  # Dynamic FPS based on config
 
 @app.route('/video_feed')
 def video_feed():
-    """Video streaming route"""
-    return Response(generate_frames(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    """Video streaming route with optimized headers for performance"""
+    response = Response(generate_frames(),
+                       mimetype='multipart/x-mixed-replace; boundary=frame')
+    # Add headers for better streaming performance
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    response.headers['Connection'] = 'keep-alive'
+    return response
 
 @app.route('/health')
 def health():

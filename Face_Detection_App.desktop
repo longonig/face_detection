@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Face Detection Web App
+Comment=AI Face Detection Web Application with real-time camera feed
+Exec=/bin/bash -c "cd /home/jetson/face_detection && /usr/bin/python3 run.py"
+Icon=camera-video
+Terminal=true
+StartupNotify=true
+Categories=Development;Graphics;AudioVideo;
+Keywords=face;detection;AI;camera;web;app;
+StartupWMClass=Face Detection
+MimeType=

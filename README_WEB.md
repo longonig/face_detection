@@ -7,7 +7,7 @@ A real-time face detection web application built with Flask, OpenCV, and PyTorch
 - 🎥 **Real-time Video Feed**: Live camera streaming with face detection overlay
 - 👥 **Face Detection**: Advanced MTCNN-based face detection with confidence scoring
 - 🎯 **Interactive Interface**: Modern, responsive web interface with Bootstrap styling
-- 📊 **Live Statistics**: Real-time face count and FPS monitoring
+- 📊 **Live Statistics**: Real-time face count monitoring
 - 🖼️ **Face Gallery**: Display detected faces with confidence scores and positions
 - ⚡ **Performance Optimized**: Configurable frame skipping and quality settings
 - 🔧 **Easy Configuration**: Centralized configuration for all settings
@@ -61,7 +61,7 @@ flask --app app run --host=0.0.0.0 --port=5000
 3. **Click "Start Detection"** to begin real-time face detection
 4. **View the results**:
    - Live video feed with face detection boxes
-   - Real-time statistics (face count, FPS)
+   - Real-time statistics (face count)
    - Gallery of detected faces with confidence scores
 5. **Click "Stop Detection"** when finished
 
@@ -98,7 +98,7 @@ PORT = 5000                    # Server port
 ### Performance Issues
 - **Slow detection**: Increase `FRAME_SKIP_RATE` in `config.py`
 - **High CPU usage**: Set `FORCE_CPU = True` in `config.py` if using GPU causes issues
-- **Low FPS**: Reduce `CAMERA_WIDTH` and `CAMERA_HEIGHT`, increase `FRAME_SKIP_RATE`
+- **Poor performance**: Reduce `CAMERA_WIDTH` and `CAMERA_HEIGHT`, increase `FRAME_SKIP_RATE`
 
 ### Web Interface Issues
 - **Page not loading**: Check if the server started successfully and no firewall is blocking port 5000

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Face Detection Web App (Auto Browser)
+Comment=AI Face Detection App - Automatically opens browser
+Exec=/home/jetson/face_detection/launch_app_with_browser.sh
+Icon=camera-video
+Terminal=true
+StartupNotify=true
+Categories=Development;Graphics;AudioVideo;
+Keywords=face;detection;AI;camera;web;app;browser;
+StartupWMClass=Face Detection
+Path=/home/jetson/face_detection
